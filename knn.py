@@ -5,6 +5,7 @@ class KNN:
     """
     K-neariest-neighbor classifier using L1 ('manhattan') or L2 ('euclidean') loss
     """
+
     def __init__(self, k=1, metric=None):
         self.k = k
         self.metric = metric
@@ -16,7 +17,7 @@ class KNN:
     def predict(self, X, num_loops=0):
         '''
         Uses the KNN model to predict classes for the data samples provided
-        
+
         Arguments:
         X, np array (num_samples, num_features) - samples to run
            through the model
@@ -45,7 +46,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -56,13 +57,14 @@ class KNN:
         if self.metric == 'manhattan':
             for i_test in range(num_test):
                 for i_train in range(num_train):
-                    # TODO: Fill dists[i_test][i_train]
-                    pass
+                    dists[i_test][i_train] = np.sum(np.abs(X[i_test, :] - self.train_X[i_train, :]))
+
         elif self.metric == 'euclidean':
             for i_test in range(num_test):
                 for i_train in range(num_train):
-                    # TODO: Fill dists[i_test][i_train]
-                    pass
+                    dists[i_test][i_train] = np.sqrt(np.sum((X[i_test, :] - self.train_X[i_train, :]) ** 2))
+
+        return dists
 
     def compute_distances_one_loop(self, X):
         '''
@@ -71,7 +73,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -81,14 +83,12 @@ class KNN:
         dists = np.zeros((num_test, num_train), np.float32)
         if self.metric == 'manhattan':
             for i_test in range(num_test):
-                # TODO: Fill the whole row of dists[i_test]
-                # without additional loops or list comprehensions
-                pass
+                dists[i_test, :] = np.sum(np.abs(X[i_test, :] - self.train_X), axis=1)
         elif self.metric == 'euclidean':
             for i_test in range(num_test):
-                # TODO: Fill the whole row of dists[i_test]
-                # without additional loops or list comprehensions
-                pass
+                dists[i_test, :] = np.sqrt(np.sum((X[i_test, :] - self.train_X) ** 2, axis=1))
+
+        return dists
 
     def compute_distances_no_loops(self, X):
         '''
@@ -97,7 +97,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -107,49 +107,50 @@ class KNN:
         # Using float32 to to save memory - the default is float64
         dists = np.zeros((num_test, num_train), np.float32)
         if self.metric == 'manhattan':
-            # TODO: Implement computing all distances with no loops!
-            pass
+            dists = np.abs(X[:, np.newaxis] - self.train_X).sum(-1)
         if self.metric == 'euclidean':
-            # TODO: Implement computing all distances with no loops!
-            pass
+            dists = np.sqrt(np.sum(np.square(X[:, np.newaxis, :] - self.train_X), axis=2))
+
+        return dists
 
     def predict_labels_binary(self, dists):
         '''
         Returns model predictions for binary classification case
-        
+
         Arguments:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
 
         Returns:
-        pred, np array of bool (num_test_samples) - binary predictions 
+        pred, np array of bool (num_test_samples) - binary predictions
            for every test sample
         '''
         num_test = dists.shape[0]
         pred = np.zeros(num_test, np.bool)
         for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
+            y_indices = np.argsort(dists[i, :])
+            k_closest_classes = self.train_y[y_indices[:self.k]]
+            pred[i] = np.argmax(np.bincount(k_closest_classes))
+
         return pred
 
     def predict_labels_multiclass(self, dists):
         '''
         Returns model predictions for multi-class classification case
-        
+
         Arguments:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
 
         Returns:
-        pred, np array of int (num_test_samples) - predicted class index 
+        pred, np array of int (num_test_samples) - predicted class index
            for every test sample
         '''
         num_test = dists.shape[0]
-        num_test = dists.shape[0]
         pred = np.zeros(num_test, np.int)
         for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
+            y_indices = np.argsort(dists[i, :])
+            k_closest_classes = self.train_y[y_indices[:self.k]]
+            pred[i] = np.argmax(np.bincount(k_closest_classes))
+
         return pred
